@@ -1,7 +1,7 @@
 #!/usr/bin/python
 """
 WpCrack is a hacking tool used to force login into the CMS WordPress website application.
-Copyright © 2021 Andrew <andrevirdiaz@gmail.com>
+Copyright © 2024 Nics <nicoadajar14@gmail.com>
 
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -35,7 +35,7 @@ from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 
 
-NAME = "WpCrack Brute Froce Tool"
+NAME = "Admin Panel Bypasser By:Nico Adajar"
 BANNER = """\
       .---.        .-----------
      /     \  __  /    ------
