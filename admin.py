@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Modules
-import mechanicalsoup
+import mechanical
 import itertools
 import sys
 from bs4 import BeautifulSoup
