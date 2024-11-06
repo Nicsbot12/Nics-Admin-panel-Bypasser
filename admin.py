@@ -60,7 +60,7 @@ data = br.open(url).read().decode('utf-8')
 if 'type="hidden"' not in data:
     print('\033[1;32m[+]\033[0m Heuristic found a CSRF Vulnerability')
 
-soup = BeautifulSoup(data, 'lxml')
+soup = BeautifulSoup(data, 'html.parser')
 i_title = soup.find('title')
 original = i_title.contents if i_title else None
 
