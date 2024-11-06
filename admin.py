@@ -46,7 +46,7 @@ if not url.startswith(('http://', 'https://')):
     url = 'http://' + url
 
 try:
-    br.open(url, timeout=10.0)  # Opens the url
+    br.open(url, timeout=10.0)  # Opens the URL
 except URLError:
     url = 'https://' + url
     br.open(url)
@@ -153,3 +153,4 @@ def brute(username, passwd, menu, option, name, form_number):
     print('\033[1;31m[-]\033[0m Failed to crack login credentials')
 
 find()
+    
