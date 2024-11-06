@@ -63,7 +63,7 @@ data = br.open(url).read().decode('utf-8')  # Reads the response
 if 'type="hidden"' not in data:
     print('\033[1;32m[+]\033[0m Heuristic found a CSRF Vulnerability')
 
-soup = BeautifulSoup(data, 'html.parset')  # Parses the response with BeautifulSoup
+soup = BeautifulSoup(data, 'html.parser')  # Parses the response with BeautifulSoup
 i_title = soup.find('title')  # Finds the title tag
 original = i_title.get_text() if i_title else None  # Gets value of title tag
 
